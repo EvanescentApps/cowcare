@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CowCare - Dashboard Éleveur</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        /* General Reset & Body */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .cow-icon {
+            width: 40px;
+            height: 40px;
+            background: #2563eb;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .notification-btn {
+            position: relative;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Main Container & Grid Layouts */
+        .main-container {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr; /* Chart takes 2/3, cattle list 1/3 */
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .control-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Card Styles (used for stat-card, content-grid cards, control-sections) */
+        .card, .stat-card, .control-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .card h2, .control-section h3 {
+            margin-bottom: 1rem;
+            color: #1f2937;
+            font-size: 1.3rem;
+        }
+
+        /* Specific Stat Card Elements */
+        .stat-card h3 {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2563eb;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-change {
+            font-size: 0.8rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .positive { background: #dcfce7; color: #16a34a; }
+        .negative { background: #fef2f2; color: #dc2626; }
+        .neutral { background: #f3f4f6; color: #6b7280; }
+
+        /* Chart Specific Styles */
+        .chart-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .chart-btn {
+            background: #f3f4f6;
+            color: #4b5563;
+            border: 1px solid #e5e7eb;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+        }
+
+        .chart-btn:hover {
+            background: #e5e7eb;
+        }
+
+        .chart-btn.active {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
+        .chart-legend-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding: 0.5rem 0;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+        }
+
+        .chart-legend-controls label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+            color: #4b5563;
+        }
+
+        .chart-legend-controls input[type="checkbox"] {
+            transform: scale(1.2);
+            cursor: pointer;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+            margin-top: 1rem;
+        }
+
+        /* Cattle List Styles */
+        .cattle-list {
+            max-height: 400px; /* Fixed height with scroll */
+            overflow-y: auto;
+        }
+        .cattle-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.4rem 0.8rem;
+            border-bottom: 1px solid #e5e7eb;
+            transition: background-color 0.2s ease;
+            border-radius: 8px;
+            margin-bottom: 0.3rem;
+        }
+        .cattle-item:last-child {
+            border-bottom: none;
+        }
+        .cattle-item:hover { background: #f8fafc; }
+
+        .cattle-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .cattle-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .cattle-details h4 {
+            margin-bottom: 0;
+            color: #1f2937;
+            font-size: 0.9rem;
+        }
+
+        .cattle-details h4 small {
+            font-weight: normal;
+            color: #6b7280;
+            font-size: 0.75rem;
+        }
+
+        .cattle-details p.cattle-stats {
+            font-size: 0.7rem;
+            color: #4b5563;
+            margin: 0;
+        }
+
+        .status-indicator {
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-healthy { background: #dcfce7; color: #16a34a; }
+        .status-warning { background: #fef3c7; color: #d97706; }
+        .status-critical { background: #fef2f2; color: #dc2626; }
+
+        /* Control Panel Elements */
+        .control-section h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .control-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .control-item:last-child {
+            border-bottom: none;
+        }
+
+        .switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: #cbd5e1;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .switch.active {
+            background: #10b981;
+        }
+
+        .switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .switch.active::after {
+            transform: translateX(30px);
+        }
+
+        .slider-control {
+            width: 100%;
+            margin: 0.5rem 0;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e5e7eb;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .btn-danger {
+            background: #ef4444;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        /* Alert Panel */
+        .alert-panel {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 350px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            transform: translateX(400px); /* Initially hidden */
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .alert-panel.show {
+            transform: translateX(0); /* Shown state */
+        }
+
+        .alert-header {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .alert-item {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .alert-item:last-child {
+            border-bottom: none;
+        }
+
+        .alert-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .alert-high { background: #ef4444; }
+        .alert-medium { background: #f59e0b; }
+        .alert-low { background: #3b82f6; }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .content-grid {
+                grid-template-columns: 1fr; /* Stack columns on small screens */
+            }
+
+            .header, .main-container {
+                padding: 1rem;
+            }
+
+            .alert-panel {
+                width: calc(100% - 40px);
+                right: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <div class="cow-icon">🐄</div>
+            <span>CowCare</span>
+        </div>
+        <div class="user-info">
+            <button class="notification-btn" onclick="toggleAlerts()">🔔</button>
+            <span>Ferme Durand</span>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Animaux Surveillés</h3>
+                <div class="stat-value">127</div>
+                <span class="stat-change positive">+3 cette semaine</span>
+            </div>
+            <div class="stat-card">
+                <h3>État de Santé Moyen</h3>
+                <div class="stat-value">94%</div>
+                <span class="stat-change positive">+2% depuis hier</span>
+            </div>
+            <div class="stat-card">
+                <h3>Alertes Actives</h3>
+                <div class="stat-value">7</div>
+                <span class="stat-change negative">+2 aujourd'hui</span>
+            </div>
+            <div class="stat-card">
+                <h3>Colliers Connectés</h3>
+                <div class="stat-value">124/127</div>
+                <span class="stat-change neutral">3 hors ligne</span>
+            </div>
+        </div>
+
+        <div class="content-grid">
+            <div class="card">
+                <h2>📊 Surveillance du Troupeau</h2>
+                <div class="chart-controls">
+                    <button class="chart-btn active" onclick="updateChartRange('24h', this)">24 Heures</button>
+                    <button class="chart-btn" onclick="updateChartRange('7d', this)">7 Jours</button>
+                    <button class="chart-btn" onclick="updateChartRange('30d', this)">30 Jours</button>
+                </div>
+                <div class="chart-legend-controls">
+                    <label>
+                        <input type="checkbox" id="toggleTemp" checked onchange="toggleDataset(0, this.checked)"> Température
+                    </label>
+                    <label>
+                        <input type="checkbox" id="toggleHR" checked onchange="toggleDataset(1, this.checked)"> Fréquence Cardiaque
+                    </label>
+                    <label>
+                        <input type="checkbox" id="toggleActivity" checked onchange="toggleDataset(2, this.checked)"> Activité
+                    </label>
+                    <label>
+                        <input type="checkbox" id="toggleRumination" checked onchange="toggleDataset(3, this.checked)"> Rumination
+                    </label>
+                </div>
+                <div class="chart-container">
+                    <canvas id="healthChart"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <h2>🐄 État des Animaux</h2>
+                <div class="cattle-list" id="cattleList">
+                    </div>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <div class="control-section">
+                <h3>🎵 Système Audio Adaptatif</h3>
+                <div class="control-item">
+                    <span>Musique classique</span>
+                    <div class="switch" onclick="toggleSwitch(this)"></div>
+                </div>
+                <div class="control-item">
+                    <span>Sons de la nature</span>
+                    <div class="switch active" onclick="toggleSwitch(this)"></div>
+                </div>
+                <div class="control-item">
+                    <span>Volume</span>
+                    <div class="slider-control">
+                        <input type="range" min="0" max="100" value="65" class="slider" id="volumeSlider">
+                        <span id="volumeValue">65%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>💡 Éclairage Intelligent</h3>
+                <div class="control-item">
+                    <span>Mode automatique</span>
+                    <div class="switch active" onclick="toggleSwitch(this)"></div>
+                </div>
+                <div class="control-item">
+                    <span>Intensité lumineuse</span>
+                    <div class="slider-control">
+                        <input type="range" min="0" max="100" value="80" class="slider" id="lightSlider">
+                        <span id="lightValue">80%</span>
+                    </div>
+                </div>
+                <div class="control-item">
+                    <span>Température couleur</span>
+                    <div class="slider-control">
+                        <input type="range" min="2700" max="6500" value="4000" class="slider" id="colorTempSlider">
+                        <span id="colorTempValue">4000K</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>🌡️ Climat & Ventilation</h3>
+                <div class="control-item">
+                    <span>Ventilation automatique</span>
+                    <div class="switch active" onclick="toggleSwitch(this)"></div>
+                </div>
+                <div class="control-item">
+                    <span>Brumisation</span>
+                    <div class="switch" onclick="toggleSwitch(this)"></div>
+                </div>
+                <div class="control-item">
+                    <span>Seuil température</span>
+                    <div class="slider-control">
+                        <input type="range" min="15" max="35" value="25" class="slider" id="tempSlider">
+                        <span id="tempValue">25°C</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>🌿 Diffusion d'Arômes</h3>
+                <div class="control-item">
+                    <span>Lavande</span>
+                    <div class="switch" onclick="toggleSwitch(this)"></div>
+                </div>
+                <div class="control-item">
+                    <span>Camomille</span>
+                    <div class="switch active" onclick="toggleSwitch(this)"></div>
+                </div>
+                <div class="control-item">
+                    <span>Intensité diffusion</span>
+                    <div class="slider-control">
+                        <input type="range" min="0" max="100" value="40" class="slider" id="aromaSlider">
+                        <span id="aromaValue">40%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>⚙️ Configuration Colliers</h3>
+                <div class="control-item">
+                    <span>Fréquence GPS</span>
+                    <select style="padding: 0.5rem; border-radius: 5px; border: 1px solid #ccc;">
+                        <option>30 secondes</option>
+                        <option selected>1 minute</option>
+                        <option>5 minutes</option>
+                    </select>
+                </div>
+                <div class="control-item">
+                    <span>Mode économie</span>
+                    <div class="switch" onclick="toggleSwitch(this)"></div>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <button class="btn" onclick="syncCollars()">🔄 Synchroniser Tous</button>
+                    <button class="btn btn-danger" onclick="emergencyAlert()" style="margin-left: 0.5rem;">🚨 Alerte Urgence</button>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3>📈 IA & Analyse</h3>
+                <div class="control-item">
+                    <span>Apprentissage adaptatif</span>
+                    <div class="switch active" onclick="toggleSwitch(this)"></div>
+                </div>
+                <div class="control-item">
+                    <span>Prédiction pathologies</span>
+                    <div class="switch active" onclick="toggleSwitch(this)"></div>
+                </div>
+                <div class="control-item">
+                    <span>Optimisation reproduction</span>
+                    <div class="switch" onclick="toggleSwitch(this)"></div>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <button class="btn" onclick="generateReport()">📊 Générer Rapport</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert-panel" id="alertPanel">
+        <div class="alert-header">
+            <h3>🔔 Alertes Actives</h3>
+            <button onclick="toggleAlerts()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">✕</button>
+        </div>
+        <div id="alertsList">
+            </div>
+    </div>
+
+    <script>
+        // Simulated data for cattle list
+const cattleData = [
+    { id: 'VL-001', name: 'Marguerite', status: 'healthy', temp: 38.5, hr: 68, activity: 'Repos', rumination: 7.2 },
+    { id: 'VL-002', name: 'Rosette', status: 'warning', temp: 39.2, hr: 85, activity: 'Alimentation', rumination: 6.1 },
+    { id: 'VL-003', name: 'Blanchette', status: 'healthy', temp: 38.3, hr: 72, activity: 'Rumination', rumination: 8.5 },
+    { id: 'VL-004', name: 'Brunette', status: 'critical', temp: 40.1, hr: 95, activity: 'Stress détecté', rumination: 4.0 },
+    { id: 'VL-005', name: 'Joséphine', status: 'healthy', temp: 38.7, hr: 70, activity: 'Déplacement', rumination: 7.8 },
+    { id: 'VL-006', name: 'Clochette', status: 'warning', temp: 39.0, hr: 78, activity: 'Repos', rumination: 6.9 },
+    { id: 'VL-007', name: 'Fleur', status: 'healthy', temp: 38.6, hr: 71, activity: 'Pâturage', rumination: 8.1 },
+    { id: 'VL-008', name: 'Violette', status: 'critical', temp: 40.5, hr: 102, activity: 'Faible', rumination: 3.5 },
+    { id: 'VL-009', name: 'Bella', status: 'healthy', temp: 38.4, hr: 69, activity: 'Rumination', rumination: 8.8 },
+    { id: 'VL-010', name: 'Charmille', status: 'warning', temp: 39.1, hr: 82, activity: 'Repos', rumination: 5.9 },
+    { id: 'VL-011', name: 'Grisette', status: 'healthy', temp: 38.2, hr: 75, activity: 'Déplacement', rumination: 7.5 },
+    { id: 'VL-012', name: 'Pompon', status: 'healthy', temp: 38.8, hr: 67, activity: 'Alimentation', rumination: 7.0 },
+    { id: 'VL-013', name: 'Noisette', status: 'warning', temp: 39.3, hr: 88, activity: 'Faible', rumination: 4.9 },
+    { id: 'VL-014', name: 'Prunelle', status: 'healthy', temp: 38.0, hr: 73, activity: 'Repos', rumination: 9.0 },
+    { id: 'VL-015', name: 'Coquette', status: 'critical', temp: 40.3, hr: 98, activity: 'Stress détecté', rumination: 3.8 }
+];
+
+        const alerts = [
+            { type: 'high', animal: 'Brunette', message: 'Température élevée détectée (40.1°C)', time: '13:45' },
+            { type: 'medium', animal: 'Rosette', message: 'Rythme cardiaque anormal', time: '12:30' },
+            { type: 'low', animal: 'VL-007', message: 'Collier déconnecté', time: '11:15' },
+            { type: 'medium', animal: 'Marguerite', message: 'Activité réduite depuis 2h', time: '10:45' }
+        ];
+
+        // --- Dashboard Initialization ---
+        function initializeDashboard() {
+            generateCattleList();
+            generateAlerts();
+            initializeChart();
+            initializeSliders();
+        }
+
+        // --- Cattle List Management ---
+        function generateCattleList() {
+            const cattleList = document.getElementById('cattleList');
+            // Sort by status: critical > warning > healthy
+            const statusOrder = { 'critical': 2, 'warning': 1, 'healthy': 0 };
+            const sortedData = [...cattleData].sort((a, b) => statusOrder[b.status] - statusOrder[a.status]);
+
+            cattleList.innerHTML = sortedData.map(cattle => `
+                <div class="cattle-item">
+                    <div class="cattle-info">
+                        <div class="cattle-avatar">${cattle.name.charAt(0)}</div>
+                        <div class="cattle-details">
+                            <h4>${cattle.name} <small>(${cattle.id})</small></h4>
+                            <p class="cattle-stats">
+                                T°: ${cattle.temp.toFixed(1)}°C &nbsp;|&nbsp; FC: ${cattle.hr}bpm &nbsp;|&nbsp; Rum: ${cattle.rumination.toFixed(1)}h
+                            </p>
+                        </div>
+                    </div>
+                    <span class="status-indicator status-${cattle.status}">
+                        ${cattle.status === 'healthy' ? '✓ Saine' :
+                        cattle.status === 'warning' ? '⚠ Surveillance' : '🚨 Critique'}
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        // --- Alert Panel Management ---
+        function generateAlerts() {
+            const alertsList = document.getElementById('alertsList');
+            alertsList.innerHTML = alerts.map(alert => `
+                <div class="alert-item">
+                    <div class="alert-icon alert-${alert.type}">
+                        ${alert.type === 'high' ? '🚨' : alert.type === 'medium' ? '⚠️' : 'ℹ️'}
+                    </div>
+                    <div>
+                        <h4>${alert.animal}</h4>
+                        <p>${alert.message}</p>
+                        <small>${alert.time}</small>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleAlerts() {
+            const alertPanel = document.getElementById('alertPanel');
+            alertPanel.classList.toggle('show');
+        }
+
+        // --- Chart Management ---
+        let healthChartInstance = null;
+
+        function initializeChart() {
+            const ctx = document.getElementById('healthChart').getContext('2d');
+            const initialData = generateChartData('24h');
+
+            healthChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: initialData.labels,
+                    datasets: [
+                    {
+                        label: 'Température Moyenne (°C)',
+                        data: initialData.datasets.temp,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.4,
+                        yAxisID: 'yTemp',
+                        hidden: false // Visible by default
+                    }, {
+                        label: 'Fréquence Cardiaque Moyenne (bpm)',
+                        data: initialData.datasets.hr,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        yAxisID: 'yHr',
+                        hidden: false // Visible by default
+                    }, {
+                        label: 'Niveau d\'Activité (%)',
+                        data: initialData.datasets.activity,
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        tension: 0.4,
+                        yAxisID: 'yActivity',
+                        hidden: false // Visible by default
+                    }, {
+                        label: 'Rumination (h/jour cumulé)',
+                        data: initialData.datasets.rumination,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        yAxisID: 'yRumination',
+                        hidden: false // Visible by default
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' }, // Enable tooltips on hover
+                    plugins: {
+                        legend: { display: false }, // Hide default legend as we have custom checkboxes
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    // Add unit based on Y-axis ID
+                                    if (context.parsed.y !== null) {
+                                        if (context.dataset.yAxisID === 'yTemp') {
+                                            label += context.parsed.y.toFixed(1) + '°C';
+                                        } else if (context.dataset.yAxisID === 'yHr') {
+                                            label += context.parsed.y.toFixed(0) + ' bpm';
+                                        } else if (context.dataset.yAxisID === 'yActivity') {
+                                            label += context.parsed.y.toFixed(0) + '%';
+                                        } else if (context.dataset.yAxisID === 'yRumination') {
+                                            label += context.parsed.y.toFixed(1) + ' h';
+                                        } else {
+                                            label += context.parsed.y;
+                                        }
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false }
+                        },
+                        yTemp: {
+                            type: 'linear',
+                            position: 'left',
+                            title: { display: true, text: 'Temp. (°C)' },
+                            grid: { drawOnChartArea: true },
+                            min: 37, // Realistic min
+                            max: 41, // Realistic max
+                            ticks: { color: '#ef4444' }
+                        },
+                        yHr: {
+                            type: 'linear',
+                            position: 'right',
+                            title: { display: true, text: 'FC (bpm)' },
+                            grid: { drawOnChartArea: false },
+                            min: 50, // Realistic min
+                            max: 100, // Realistic max
+                            ticks: { color: '#3b82f6' }
+                        },
+                        yActivity: {
+                            type: 'linear',
+                            position: 'left', // Can be left or right, depending on preference
+                            title: { display: true, text: 'Activité (%)' },
+                            grid: { drawOnChartArea: false },
+                            min: 0,
+                            max: 100,
+                            ticks: { color: '#f59e0b' }
+                        },
+                        yRumination: {
+                            type: 'linear',
+                            position: 'right', // Can be left or right
+                            title: { display: true, text: 'Rumination (h)' },
+                            grid: { drawOnChartArea: false },
+                            min: 0,
+                            max: 12, // Max rumination hours
+                            ticks: { color: '#10b981' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Toggles visibility of a dataset (line on chart)
+        function toggleDataset(index, isChecked) {
+            if (healthChartInstance) {
+                healthChartInstance.data.datasets[index].hidden = !isChecked;
+                healthChartInstance.update();
+            }
+        }
+
+        // Generates more realistic data for the chart based on selected range
+        function generateChartData(range) {
+            let labels = [];
+            let datasets = { temp: [], hr: [], activity: [], rumination: [] };
+            const now = new Date(); // Current date/time
+
+            if (range === '24h') {
+                for (let i = 23; i >= 0; i--) { // Go back 24 hours
+                    let d = new Date(now.getTime() - i * 3600 * 1000); // Date object for each hour
+                    labels.push(`${String(d.getHours()).padStart(2, '0')}:00`);
+
+                    // Realistic Temperature (38.0-39.5, with slight daily cycle and small random noise)
+                    let baseTemp = 38.5 + Math.sin(d.getHours() * Math.PI / 12) * 0.2; // Slight dip in temp during night
+                    let tempNoise = (Math.random() - 0.5) * 0.3;
+                    let temp = baseTemp + tempNoise;
+                    if (Math.random() < 0.03 && i > 12) { // 3% chance of a slight fever spike in the last 12 hours
+                        temp += Math.random() * 0.8; // Up to 0.8 degree higher for a short period
+                    }
+                    datasets.temp.push(parseFloat(temp.toFixed(1)));
+
+                    // Realistic Heart Rate (60-80bpm at rest, higher during activity)
+                    let baseHr = 70 + Math.cos(d.getHours() * Math.PI / 12) * 5; // Slight daily cycle
+                    let hrNoise = (Math.random() - 0.5) * 6;
+                    let hr = baseHr + hrNoise;
+                    // Simulate higher HR during typical active hours (e.g., 6-9 AM, 4-7 PM)
+                    const hour = d.getHours();
+                    if ((hour >= 6 && hour <= 9) || (hour >= 16 && hour <= 19)) {
+                        hr += Math.random() * 8; // Increase during active periods
+                    }
+                    datasets.hr.push(Math.round(hr));
+
+                    // Realistic Activity (%) - higher during day, lower at night
+                    let baseActivity = 30 + Math.sin(d.getHours() * Math.PI / 12 + Math.PI/2) * 25; // Daily cycle for activity
+                    let activityNoise = (Math.random() - 0.5) * 10;
+                    let activity = baseActivity + activityNoise;
+                    activity = Math.max(5, Math.min(95, activity)); // Keep within 5-95% bounds
+                    datasets.activity.push(parseFloat(activity.toFixed(0)));
+
+                    // Realistic Rumination (cumulative hours/day, higher during rest/night)
+                    let baseRumination = 7 + Math.sin(d.getHours() * Math.PI / 12 + Math.PI) * 1.5; // Inverse daily cycle to activity
+                    let ruminationNoise = (Math.random() - 0.5) * 0.8;
+                    let rumination = baseRumination + ruminationNoise;
+                    rumination = Math.max(0, rumination); // Ensure non-negative
+                    datasets.rumination.push(parseFloat(rumination.toFixed(1)));
+                }
+                labels.reverse(); // Display from oldest to newest
+                for (const key in datasets) {
+                    datasets[key].reverse();
+                }
+
+            } else if (range === '7d') {
+                for (let i = 6; i >= 0; i--) { // Last 7 days
+                    let d = new Date(now.getTime() - i * 24 * 3600 * 1000);
+                    labels.push(`${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`);
+
+                    // Daily averages - smoother fluctuations
+                    datasets.temp.push(parseFloat((38.6 + (Math.random() - 0.5) * 0.3).toFixed(1)));
+                    datasets.hr.push(Math.round(72 + (Math.random() - 0.5) * 4));
+                    datasets.activity.push(parseFloat((50 + Math.random() * 8).toFixed(0)));
+                    datasets.rumination.push(parseFloat((7.0 + (Math.random() - 0.5) * 0.8).toFixed(1)));
+                }
+            } else if (range === '30d') {
+                for (let i = 29; i >= 0; i--) { // Last 30 days
+                    let d = new Date(now.getTime() - i * 24 * 3600 * 1000);
+                    labels.push(`${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`);
+
+                    // Monthly averages - even smoother, long-term trends
+                    datasets.temp.push(parseFloat((38.7 + (Math.random() - 0.5) * 0.1).toFixed(1)));
+                    datasets.hr.push(Math.round(73 + (Math.random() - 0.5) * 2));
+                    datasets.activity.push(parseFloat((52 + Math.random() * 3).toFixed(0)));
+                    datasets.rumination.push(parseFloat((7.5 + (Math.random() - 0.5) * 0.3).toFixed(1)));
+                }
+            }
+            return { labels, datasets };
+        }
+
+        function updateChartRange(range, clickedButton) {
+            document.querySelectorAll('.chart-btn').forEach(btn => btn.classList.remove('active'));
+            clickedButton.classList.add('active');
+
+            const newData = generateChartData(range);
+            healthChartInstance.data.labels = newData.labels;
+            healthChartInstance.data.datasets[0].data = newData.datasets.temp;
+            healthChartInstance.data.datasets[1].data = newData.datasets.hr;
+            healthChartInstance.data.datasets[2].data = newData.datasets.activity;
+            healthChartInstance.data.datasets[3].data = newData.datasets.rumination;
+            healthChartInstance.update();
+        }
+
+        // --- Slider Controls ---
+        function initializeSliders() {
+            const sliders = [
+                { id: 'volumeSlider', valueId: 'volumeValue', suffix: '%' },
+                { id: 'lightSlider', valueId: 'lightValue', suffix: '%' },
+                { id: 'colorTempSlider', valueId: 'colorTempValue', suffix: 'K' },
+                { id: 'tempSlider', valueId: 'tempValue', suffix: '°C' },
+                { id: 'aromaSlider', valueId: 'aromaValue', suffix: '%' }
+            ];
+
+            sliders.forEach(slider => {
+                const element = document.getElementById(slider.id);
+                const valueElement = document.getElementById(slider.valueId);
+
+                element.addEventListener('input', function() {
+                    valueElement.textContent = this.value + slider.suffix;
+                });
+            });
+        }
+
+        // --- Generic Toggles and Buttons ---
+        function toggleSwitch(element) {
+            element.classList.toggle('active');
+            console.log('Switch toggled:', element.classList.contains('active'));
+        }
+
+        function syncCollars() {
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '🔄 Synchronisation...';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                btn.innerHTML = '✅ Synchronisé';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }, 1000); // Briefly show "Synchronisé" then revert
+            }, 2000); // Simulate 2-second sync time
+        }
+
+        function emergencyAlert() {
+            if (confirm('Déclencher une alerte d\'urgence pour tout le troupeau ?')) {
+                alert('🚨 Alerte d\'urgence envoyée ! Tous les colliers ont été notifiés.');
+            }
+        }
+
+        function generateReport() {
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '📊 Génération...';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                btn.innerHTML = '📄 Rapport généré';
+                alert('Rapport de bien-être animal généré avec succès !\nConsultez l\'onglet "Rapports" pour plus de détails.');
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }, 1000);
+            }, 3000); // Simulate 3-second report generation
+        }
+
+        // --- Real-time Data Simulation (for cattle list) ---
+        setInterval(() => {
+            cattleData.forEach(cattle => {
+                // Base values with slight variations
+                let newTemp = 38.5 + (Math.random() - 0.5) * 0.3; // Healthy range
+                let newHr = 70 + (Math.random() - 0.5) * 6; // Healthy range
+                let newActivity = 40 + (Math.random() * 20); // Moderate activity
+                let newRumination = 7.0 + (Math.random() - 0.5) * 0.8; // Healthy rumination
+
+                // Introduce states (critical/warning) based on random chance for demonstration
+                const r = Math.random();
+                if (r < 0.05) { // 5% chance of critical
+                    cattle.status = 'critical';
+                    newTemp = 39.8 + Math.random() * 0.7; // Fever
+                    newHr = 90 + Math.random() * 15; // High HR
+                    newRumination = 2.0 + Math.random() * 2.0; // Significantly reduced rumination
+                    newActivity = 10 + Math.random() * 10; // Low activity due to illness/stress
+                } else if (r < 0.15) { // 10% chance of warning (total 15%)
+                    cattle.status = 'warning';
+                    newTemp = 39.0 + Math.random() * 0.5; // Elevated temp
+                    newHr = 80 + Math.random() * 8; // Elevated HR
+                    newRumination = 5.0 + Math.random() * 1.0; // Reduced rumination
+                    newActivity = 25 + Math.random() * 15; // Slightly reduced activity
+                } else {
+                    cattle.status = 'healthy'; // Otherwise healthy
+                }
+
+                // Update cattle's data with new values
+                cattle.temp = parseFloat(newTemp.toFixed(1));
+                cattle.hr = Math.round(newHr);
+                cattle.activity = parseFloat(newActivity.toFixed(1));
+                cattle.rumination = parseFloat(newRumination.toFixed(1));
+            });
+
+            generateCattleList(); // Re-render the cattle list with updated data
+        }, 5000); // Update every 5 seconds
+
+        // Initialize the dashboard when the DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', initializeDashboard);
+    </script>
+</body>
+</html>
