@@ -466,7 +466,7 @@
             <span>CowCare</span>
         </div>
         <div class="user-info">
-            <button class="notification-btn" onclick="toggleAlerts()">🔔</button>
+            <button class="notification-btn" onclick="toggleAlerts()"></button>
             <span>Ferme Durand</span>
         </div>
     </header>
@@ -497,7 +497,7 @@
 
         <div class="content-grid">
             <div class="card">
-                <h2>📊 Surveillance du Troupeau</h2>
+                <h2>Surveillance du Troupeau</h2>
                 <div class="chart-controls">
                     <button class="chart-btn active" onclick="updateChartRange('24h', this)">24 Heures</button>
                     <button class="chart-btn" onclick="updateChartRange('7d', this)">7 Jours</button>
@@ -522,7 +522,7 @@
                 </div>
             </div>
             <div class="card">
-                <h2>🐄 État des Animaux</h2>
+                <h2>État des Animaux</h2>
                 <div class="cattle-list" id="cattleList">
                     </div>
             </div>
@@ -530,7 +530,7 @@
 
         <div class="control-panel">
             <div class="control-section">
-                <h3>🎵 Système Audio Adaptatif</h3>
+                <h3>Système Audio Adaptatif</h3>
                 <div class="control-item">
                     <span>Musique classique</span>
                     <div class="switch" onclick="toggleSwitch(this)"></div>
@@ -549,7 +549,7 @@
             </div>
 
             <div class="control-section">
-                <h3>💡 Éclairage Intelligent</h3>
+                <h3>Éclairage Intelligent</h3>
                 <div class="control-item">
                     <span>Mode automatique</span>
                     <div class="switch active" onclick="toggleSwitch(this)"></div>
@@ -571,7 +571,7 @@
             </div>
 
             <div class="control-section">
-                <h3>🌡️ Climat & Ventilation</h3>
+                <h3>Climat & Ventilation</h3>
                 <div class="control-item">
                     <span>Ventilation automatique</span>
                     <div class="switch active" onclick="toggleSwitch(this)"></div>
@@ -590,7 +590,7 @@
             </div>
 
             <div class="control-section">
-                <h3>🌿 Diffusion d'Arômes</h3>
+                <h3>Diffusion d'Arômes</h3>
                 <div class="control-item">
                     <span>Lavande</span>
                     <div class="switch" onclick="toggleSwitch(this)"></div>
@@ -609,7 +609,7 @@
             </div>
 
             <div class="control-section">
-                <h3>⚙️ Configuration Colliers</h3>
+                <h3>Configuration Colliers</h3>
                 <div class="control-item">
                     <span>Fréquence GPS</span>
                     <select style="padding: 0.5rem; border-radius: 5px; border: 1px solid #ccc;">
@@ -623,13 +623,13 @@
                     <div class="switch" onclick="toggleSwitch(this)"></div>
                 </div>
                 <div style="margin-top: 1rem;">
-                    <button class="btn" onclick="syncCollars()">🔄 Synchroniser Tous</button>
-                    <button class="btn btn-danger" onclick="emergencyAlert()" style="margin-left: 0.5rem;">🚨 Alerte Urgence</button>
+                    <button class="btn" onclick="syncCollars()">Synchroniser Tous</button>
+                    <button class="btn btn-danger" onclick="emergencyAlert()" style="margin-left: 0.5rem;">Alerte Urgence</button>
                 </div>
             </div>
 
             <div class="control-section">
-                <h3>📈 IA & Analyse</h3>
+                <h3>IA & Analyse</h3>
                 <div class="control-item">
                     <span>Apprentissage adaptatif</span>
                     <div class="switch active" onclick="toggleSwitch(this)"></div>
@@ -643,7 +643,7 @@
                     <div class="switch" onclick="toggleSwitch(this)"></div>
                 </div>
                 <div style="margin-top: 1rem;">
-                    <button class="btn" onclick="generateReport()">📊 Générer Rapport</button>
+                    <button class="btn" onclick="generateReport()">Générer Rapport</button>
                 </div>
             </div>
         </div>
@@ -651,7 +651,7 @@
 
     <div class="alert-panel" id="alertPanel">
         <div class="alert-header">
-            <h3>🔔 Alertes Actives</h3>
+            <h3>Alertes Actives</h3>
             <button onclick="toggleAlerts()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">✕</button>
         </div>
         <div id="alertsList">
@@ -990,11 +990,11 @@ const cattleData = [
         function syncCollars() {
             const btn = event.target;
             const originalText = btn.innerHTML;
-            btn.innerHTML = '🔄 Synchronisation...';
+            btn.innerHTML = 'Synchronisation...';
             btn.disabled = true;
 
             setTimeout(() => {
-                btn.innerHTML = '✅ Synchronisé';
+                btn.innerHTML = 'Synchronisé';
                 setTimeout(() => {
                     btn.innerHTML = originalText;
                     btn.disabled = false;
@@ -1004,18 +1004,18 @@ const cattleData = [
 
         function emergencyAlert() {
             if (confirm('Déclencher une alerte d\'urgence pour tout le troupeau ?')) {
-                alert('🚨 Alerte d\'urgence envoyée ! Tous les colliers ont été notifiés.');
+                alert('Alerte d\'urgence envoyée ! Tous les colliers ont été notifiés.');
             }
         }
 
         function generateReport() {
             const btn = event.target;
             const originalText = btn.innerHTML;
-            btn.innerHTML = '📊 Génération...';
+            btn.innerHTML = 'Génération...';
             btn.disabled = true;
 
             setTimeout(() => {
-                btn.innerHTML = '📄 Rapport généré';
+                btn.innerHTML = 'Rapport généré';
                 alert('Rapport de bien-être animal généré avec succès !\nConsultez l\'onglet "Rapports" pour plus de détails.');
                 setTimeout(() => {
                     btn.innerHTML = originalText;
